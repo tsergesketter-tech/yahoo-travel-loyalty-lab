@@ -1,0 +1,5 @@
+Name,Tier__c,Hotel_Earn_Rate__c,Flight_Earn_Rate__c,Hotel_Burn_Rate__c,Flight_Burn_Rate__c
+Purple Tier Rates,Purple,5,3,100,120
+Violet Tier Rates,Violet,8,5,90,110
+Ultraviolet Tier Rates,Ultraviolet,12,8,80,95
+Amethyst Tier Rates,Amethyst,18,12,65,80

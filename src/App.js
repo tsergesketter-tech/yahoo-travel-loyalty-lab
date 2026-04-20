@@ -1,25 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AppProvider } from "./context/AppContext";
+import Header from "./components/Header";
+import SubNav from "./components/SubNav";
+import Footer from "./components/Footer";
+import ToastContainer from "./components/Toast";
+import HomePage from "./pages/HomePage";
+import HotelSearchPage from "./pages/HotelSearchPage";
+import FlightSearchPage from "./pages/FlightSearchPage";
+import StayDetailPage from "./pages/StayDetailPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import ConfirmationPage from "./pages/ConfirmationPage";
+import MemberPage from "./pages/MemberPage";
+import PromotionsPage from "./pages/PromotionsPage";
+import "./App.css";
 
-function App() {
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AppProvider>
+      <BrowserRouter>
+        <div className="app">
+          <Header />
+          <SubNav />
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/hotels" element={<HotelSearchPage />} />
+              <Route path="/flights" element={<FlightSearchPage />} />
+              <Route path="/stay/:id" element={<StayDetailPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/confirmation" element={<ConfirmationPage />} />
+              <Route path="/member" element={<MemberPage />} />
+              <Route path="/promotions" element={<PromotionsPage />} />
+              <Route path="*" element={<HomePage />} />
+            </Routes>
+          </main>
+          <Footer />
+          <ToastContainer />
+        </div>
+      </BrowserRouter>
+    </AppProvider>
   );
 }
-
-export default App;
