@@ -11,7 +11,7 @@ const SF_CLIENT_ID = process.env.REACT_APP_SF_CLIENT_ID;
 const SF_CLIENT_SECRET = process.env.REACT_APP_SF_CLIENT_SECRET;
 const SF_API_VERSION = process.env.REACT_APP_SF_API_VERSION || "v59.0";
 const SF_LOYALTY_PROGRAM = "Yahoo Rewards";
-const PORT = process.env.API_PORT || 3002;
+const PORT = process.env.PORT || process.env.API_PORT || 3002;
 
 let tokenCache = null;
 
@@ -634,6 +634,12 @@ if (!SF_CLIENT_ID || !SF_CLIENT_SECRET) {
   console.error("Missing REACT_APP_SF_CLIENT_ID or REACT_APP_SF_CLIENT_SECRET in .env");
   process.exit(1);
 }
+
+const path = require("path");
+app.use(express.static(path.join(__dirname, "build")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`[server] API running on http://localhost:${PORT}`);
