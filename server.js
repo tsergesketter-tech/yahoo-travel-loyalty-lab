@@ -9,7 +9,7 @@ app.use(express.json());
 const SF_LOGIN_URL = process.env.REACT_APP_SF_LOGIN_URL || "https://trailsignup-78f9c4eccfa797.my.salesforce.com";
 const SF_CLIENT_ID = process.env.REACT_APP_SF_CLIENT_ID;
 const SF_CLIENT_SECRET = process.env.REACT_APP_SF_CLIENT_SECRET;
-const SF_API_VERSION = process.env.REACT_APP_SF_API_VERSION || "v59.0";
+const SF_API_VERSION = process.env.REACT_APP_SF_API_VERSION || "v66.0";
 const SF_LOYALTY_PROGRAM = "Yahoo Rewards";
 const PORT = process.env.PORT || process.env.API_PORT || 3002;
 
