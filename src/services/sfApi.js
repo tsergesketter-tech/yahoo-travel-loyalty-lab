@@ -58,7 +58,7 @@ export async function evaluatePromotion(body) {
 }
 
 export function buildCartRequest(product, membershipNumber, opts = {}) {
-  const { quantity = 1, amount, productCode, productName, catalog } = opts;
+  const { amount, origin, destination } = opts;
   return {
     cart: {
       cartDetails: [{
@@ -66,14 +66,8 @@ export function buildCartRequest(product, membershipNumber, opts = {}) {
         membershipNumber: membershipNumber || "YAH0000001",
         currencyISOCode: "USD",
         transactionAmount: amount || 0,
-        cartLineDetails: [{
-          cartLineProduct: productName || product.name || product.city || "Product",
-          cartLineProductCode: productCode || product.sku || product.id || "PROD",
-          cartLineProductStockKeepingUnit: productCode || product.sku || product.id || "PROD",
-          cartLineItemQuantity: quantity,
-          cartLineItemAmount: amount || 0,
-          cartLineProductCatalog: catalog || "Yahoo Travel Catalog",
-        }],
+        origin: origin || "",
+        destination: destination || product.city || "",
       }],
     },
   };

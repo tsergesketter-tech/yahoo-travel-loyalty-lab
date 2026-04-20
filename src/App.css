@@ -410,6 +410,12 @@ img { display: block; max-width: 100%; }
 .detail-page__meta { display: flex; gap: 12px; font-size: 13px; margin-bottom: 16px; }
 .detail-page__rating { color: var(--amber); font-weight: 600; }
 .detail-page__region { background: var(--grey-100); padding: 2px 10px; border-radius: 20px; color: var(--grey-600); font-weight: 500; }
+.detail-page__price-redeem-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  align-items: start; margin-bottom: 16px;
+}
+.detail-page__price-redeem-row .detail-page__pricing { margin-bottom: 0; }
+.detail-page__price-redeem-row .detail-page__sim { margin-top: 0; }
 .detail-page__pricing { margin-bottom: 16px; }
 .detail-page__price { font-size: 28px; font-weight: 800; }
 .detail-page__price-label { font-size: 13px; color: var(--grey-500); }

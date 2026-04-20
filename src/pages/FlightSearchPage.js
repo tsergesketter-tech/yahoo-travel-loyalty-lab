@@ -108,11 +108,9 @@ export default function FlightSearchPage() {
 
     try {
       const cartReq = buildCartRequest(flight, member.membershipNumber, {
-        quantity: passengers,
         amount: totalAmount,
-        productCode: `${flight.origin.code}-${flight.destination.code}`,
-        productName: `${flight.origin.city} to ${flight.destination.city}`,
-        catalog: "Yahoo Flights Catalog",
+        origin: flight.origin.city,
+        destination: flight.destination.city,
       });
       const sfData = await fetchEligiblePromotions(cartReq);
       const processed = processEligiblePromotions(sfData, totalAmount);

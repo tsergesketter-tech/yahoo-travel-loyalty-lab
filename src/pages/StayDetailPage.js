@@ -38,11 +38,8 @@ export default function StayDetailPage() {
     setSimResult(null);
     const totalAmount = hotel.nightlyPriceUsd * nights;
     const cartReq = buildCartRequest(hotel, member.membershipNumber, {
-      quantity: nights,
       amount: totalAmount,
-      productCode: hotel.sku,
-      productName: hotel.city,
-      catalog: "Yahoo Travel Catalog",
+      destination: hotel.city,
     });
 
     fetchEligiblePromotions(cartReq)
@@ -144,27 +141,6 @@ export default function StayDetailPage() {
               </div>
             )}
 
-            {member.pointsBalance > 0 && (
-              <div className="detail-page__sim detail-page__sim--burn">
-                <div className="detail-page__sim-header">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                  Redeem Points
-                </div>
-                <div className="detail-page__sim-line">
-                  <span>Full stay in points</span>
-                  <strong>{(Math.round(hotel.nightlyPriceUsd * nights / 0.01)).toLocaleString()} pts</strong>
-                </div>
-                <div className="detail-page__sim-line">
-                  <span>Your balance</span>
-                  <strong>{member.pointsBalance.toLocaleString()} pts</strong>
-                </div>
-                <div className="detail-page__sim-process">
-                  {member.pointsBalance >= Math.round(hotel.nightlyPriceUsd * nights / 0.01)
-                    ? "You have enough points to cover this stay!"
-                    : `Apply up to $${(member.pointsBalance * 0.01).toFixed(0)} toward this booking`}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -178,12 +154,36 @@ export default function StayDetailPage() {
               <span className="detail-page__region">{hotel.regionTag}</span>
             </div>
 
-            <div className="detail-page__pricing">
-              <div className="detail-page__price">${hotel.nightlyPriceUsd}</div>
-              <div className="detail-page__price-label">per night</div>
-              <div className="detail-page__price-breakdown">
-                ${hotel.nightlyPriceUsd} x {nights} night{nights > 1 ? "s" : ""} = <strong>${hotel.nightlyPriceUsd * nights}</strong>
+            <div className="detail-page__price-redeem-row">
+              <div className="detail-page__pricing">
+                <div className="detail-page__price">${hotel.nightlyPriceUsd}</div>
+                <div className="detail-page__price-label">per night</div>
+                <div className="detail-page__price-breakdown">
+                  ${hotel.nightlyPriceUsd} x {nights} night{nights > 1 ? "s" : ""} = <strong>${hotel.nightlyPriceUsd * nights}</strong>
+                </div>
               </div>
+
+              {member.pointsBalance > 0 && (
+                <div className="detail-page__sim detail-page__sim--burn">
+                  <div className="detail-page__sim-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    Redeem Points
+                  </div>
+                  <div className="detail-page__sim-line">
+                    <span>Full stay in points</span>
+                    <strong>{(Math.round(hotel.nightlyPriceUsd * nights / 0.01)).toLocaleString()} pts</strong>
+                  </div>
+                  <div className="detail-page__sim-line">
+                    <span>Your balance</span>
+                    <strong>{member.pointsBalance.toLocaleString()} pts</strong>
+                  </div>
+                  <div className="detail-page__sim-process">
+                    {member.pointsBalance >= Math.round(hotel.nightlyPriceUsd * nights / 0.01)
+                      ? "You have enough points to cover this stay!"
+                      : `Apply up to $${(member.pointsBalance * 0.01).toFixed(0)} toward this booking`}
+                  </div>
+                </div>
+              )}
             </div>
 
             {incentive && (
