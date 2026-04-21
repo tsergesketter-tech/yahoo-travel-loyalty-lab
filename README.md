@@ -599,9 +599,214 @@ GET /api/loyalty/query?q=SELECT Id, Name FROM Promotion WHERE IsActive = true
 
 ---
 
+## Direct Salesforce API Reference
+
+The Postman collection hits Salesforce APIs directly (no proxy server). All requests require a Bearer token obtained via OAuth2.
+
+### Authentication
+
+```
+POST {instance_url}/services/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id={consumer_key}&client_secret={consumer_secret}
+```
+
+**Response:**
+```json
+{
+  "access_token": "00DHn000...",
+  "instance_url": "https://trailsignup-78f9c4eccfa797.my.salesforce.com",
+  "token_type": "Bearer"
+}
+```
+
+Use the `access_token` as `Authorization: Bearer {token}` on all subsequent requests.
+
+---
+
+### Member Profile
+
+```
+GET /services/data/v66.0/loyalty-programs/{program}/members?membershipNumber={num}
+```
+
+Returns full member profile: points balances, tier, currencies, enrollment info.
+
+---
+
+### Transaction Ledger Summary
+
+```
+GET /services/data/v66.0/loyalty/programs/{program}/members/{membership}/transaction-ledger-summary
+```
+
+| Query Param | Description |
+|-------------|-------------|
+| `pageNumber` | Page number (default 1) |
+| `journalTypeName` | `Accrual` or `Redemption` |
+| `journalSubTypeName` | `Hotel Booking`, `Flight Booking`, `Car Booking`, `Purchase`, `Redeem Points`, `Redeem Reward` |
+| `periodStartDate` | `YYYY-MM-DD` |
+| `periodEndDate` | `YYYY-MM-DD` |
+
+**Response shape:** `{ transactionJournals: [...], totalCount, nextPage }`
+
+Each journal has `pointsChange` as an array: `[{ changeInPoints, loyaltyMemberCurrency }]`
+
+---
+
+### Realtime Loyalty Program Process
+
+```
+POST /services/data/v64.0/connect/realtime/loyalty/programs/{program}
+Content-Type: application/json
+```
+
+Handles both real transactions and simulations via the `isSimulation` flag.
+
+**Request Body (Accrual):**
+```json
+{
+  "transactionJournals": [
+    {
+      "ExternalTransactionNumber": "BK-001",
+      "MembershipNumber": "YAH0000001",
+      "JournalTypeName": "Accrual",
+      "JournalSubTypeName": "Hotel Booking",
+      "ActivityDate": "2026-04-20T15:00:00.000Z",
+      "CurrencyIsoCode": "USD",
+      "TransactionAmount": "475",
+      "Channel": "Web",
+      "LOB__c": "Hotel",
+      "Destination_City__c": "Paris",
+      "Destination_Country__c": "France",
+      "Length_of_Stay__c": "3"
+    }
+  ],
+  "runSetting": {
+    "isSimulation": false
+  }
+}
+```
+
+Set `isSimulation: true` to preview points without creating records.
+
+**Response (real):** Returns `transactionJournals` with `pointsChange` arrays showing points credited.
+
+**Response (simulation):** Returns `outputResult.outputParameters.results` with simulated points per currency and matching process rules.
+
+---
+
+### Eligible Promotions (Global Promotions Management)
+
+```
+POST /services/data/v64.0/global-promotions-management/eligible-promotions
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "cart": {
+    "cartDetails": [
+      {
+        "activityStartDate": "2026-05-20T00:00:00.000Z",
+        "membershipNumber": "YAH0000001",
+        "currencyISOCode": "USD",
+        "transactionAmount": 1000,
+        "origin": "San Francisco",
+        "destination": "New York"
+      }
+    ]
+  }
+}
+```
+
+> **Note:** `transactionAmount` must be > $500 for current promotion rules to match.
+
+**Response:** Returns `eligiblePromotions[]` with `promotionEligibleRules[].ruleRewards[]` containing reward types:
+- `ProvideDiscount` — percentage or fixed amount off
+- `CreditFixedPoints` — bonus points awarded
+
+---
+
+### Engagement Trail
+
+```
+GET /services/data/v63.0/loyalty/programs/{program}/members/{membership}/engagement-trail?promotionId={id}
+```
+
+Returns step-by-step progress for milestone promotions: completed/total steps, earned/possible points, per-step status.
+
+---
+
+### Promotion Evaluation & Execution
+
+```
+POST /services/data/v64.0/loyalty/programs/{program}/promotion-evaluation-and-execution
+Content-Type: application/json
+```
+
+```json
+{
+  "membershipNumber": "YAH0000001",
+  "promotionId": "0c8Hn0000011qoJIAQ"
+}
+```
+
+---
+
+### Vouchers
+
+```
+GET /services/data/v63.0/loyalty/programs/{program}/members/{membership}/vouchers
+```
+
+---
+
+### SOQL Queries
+
+```
+GET /services/data/v66.0/query?q={SOQL}
+```
+
+**Useful queries included in the Postman collection:**
+
+| Query | Description |
+|-------|-------------|
+| `SELECT ... FROM Promotion WHERE IsActive = true` | Active promotions |
+| `SELECT ... FROM LoyaltyProgramMbrPromotion` | Member promotion enrollments |
+| `SELECT ... FROM LoyaltyPgmMbrPromEligView` | Eligible promotions view |
+| `SELECT ... FROM LoyaltyProgramMemberBadge` | Member badges (joined to `LoyaltyProgramBadge`) |
+| `SELECT ... FROM LoyaltyProgramBadge` | All program badges |
+| `SELECT ... FROM LoyaltyProgramMember LIMIT 10` | Program members |
+| `SELECT ... FROM TransactionJournal ORDER BY ActivityDate DESC` | Recent transactions |
+
+---
+
 ## Postman Collection
 
-Import `postman/Yahoo_Travel_Loyalty_Lab.postman_collection.json` into Postman. Set the `base_url` variable to your server URL.
+Import `postman/Yahoo_Travel_Loyalty_Lab.postman_collection.json` into Postman.
+
+The collection hits **Salesforce APIs directly** (not the proxy server). Setup:
+
+1. Set `sf_client_id` and `sf_client_secret` from your Connected App
+2. Run the **"Get Access Token"** request first — it auto-sets `sf_access_token` via test script
+3. All subsequent requests use Bearer auth automatically via collection-level auth
+
+**Collection variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `sf_instance_url` | Salesforce instance URL |
+| `sf_client_id` | Connected App consumer key |
+| `sf_client_secret` | Connected App consumer secret |
+| `sf_access_token` | Auto-populated by auth request |
+| `sf_api_version` | `v66.0` |
+| `loyalty_program` | `Yahoo Rewards` |
+| `membership_number` | `YAH0000001` |
+
+**Sections:** Authentication, Member Profile, Transaction Ledger Summary (4 variants), Realtime Loyalty Program Process (5 requests), Promotions (4 requests), Vouchers, SOQL Queries (7 queries)
 
 ---
 
