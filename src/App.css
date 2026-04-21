@@ -565,7 +565,9 @@ img { display: block; max-width: 100%; }
 .checkout-page__line--credit { color: var(--green); }
 .checkout-page__line--total { border-top: 1px solid var(--grey-200); padding-top: 10px; margin-top: 6px; font-weight: 700; font-size: 16px; }
 .checkout-page__meta { font-size: 12px; color: var(--grey-400); margin-top: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
-.checkout-page__points-earn { margin-top: 12px; font-size: 13px; color: var(--purple); font-weight: 500; padding: 10px; background: var(--purple-ghost); border-radius: var(--radius); }
+.checkout-page__points-earn { margin-top: 12px; font-size: 13px; color: var(--purple); font-weight: 500; padding: 10px; background: var(--purple-ghost); border-radius: var(--radius); transition: opacity .2s; }
+.checkout-page__sim-dots { animation: simPulse 1.2s infinite; }
+@keyframes simPulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 
 .checkout-page__flight-route {
   display: flex; align-items: center; gap: 12px; margin: 16px 0;

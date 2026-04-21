@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import hotels from "../data/hotels";
 import { useApp } from "../context/AppContext";
 import { getIncentive } from "../engine/steeringEngine";
 import promotionsData from "../data/promotions";
-import { postTransactionJournal, buildAccrualJournal } from "../services/sfApi";
+import { postTransactionJournal, buildAccrualJournal, simulatePoints } from "../services/sfApi";
 
 export default function CheckoutPage() {
   const [params] = useSearchParams();
@@ -59,6 +59,32 @@ export default function CheckoutPage() {
   const redeemCredit = redeemPoints * pointValue;
   const finalTotal = Math.max(0, baseTotal - redeemCredit);
 
+  const [simEarn, setSimEarn] = useState(null);
+  const [simLoading, setSimLoading] = useState(false);
+  const debounceRef = useRef(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const cashAmount = finalTotal;
+      if (cashAmount <= 0) { setSimEarn(0); setSimLoading(false); return; }
+      setSimLoading(true);
+      const journal = isFlightBooking
+        ? { JournalTypeName: "Accrual", JournalSubTypeName: "Flight Booking", TransactionAmount: cashAmount, CurrencyIsoCode: "USD", LOB__c: "Flight", Destination_City__c: destCity }
+        : { JournalTypeName: "Accrual", JournalSubTypeName: "Hotel Booking", TransactionAmount: cashAmount, CurrencyIsoCode: "USD", LOB__c: "Hotel", Destination_City__c: hotel?.city || "", Destination_Country__c: hotel?.country || "", Length_of_Stay__c: String(nights) };
+      simulatePoints(member.membershipNumber, [journal])
+        .then((data) => {
+          const r = data.results?.[0];
+          if (r && !r.errorMessage && Object.keys(r.byCurrency).length > 0) {
+            setSimEarn(Object.values(r.byCurrency)[0]);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setSimLoading(false));
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [finalTotal, isFlightBooking, destCity, hotel, nights, member.membershipNumber]);
+
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -109,7 +135,8 @@ export default function CheckoutPage() {
           .then((r) => console.log("[Checkout] Flight journals posted:", r.journalIds))
           .catch((err) => console.warn("[Checkout] Flight journal failed:", err.message));
 
-        addToast(`Flight ${flightNumber} booked! Earned ${flightPointsEarned.toLocaleString()} Yahoo Points.`);
+        const earnedPts = simEarn != null ? simEarn : flightPointsEarned * Number(passengers);
+        addToast(`Flight ${flightNumber} booked! Earned ${earnedPts.toLocaleString()} Yahoo Points.`);
         navigate(
           `/confirmation?booking=${bookingId}&type=flight&flightNumber=${flightNumber}&originCity=${originCity}&originCode=${originCode}&destCity=${destCity}&destCode=${destCode}&departure=${departure}&arrival=${arrival}&date=${flightDate}&passengers=${passengers}&class=${flightClass}&total=${finalTotal.toFixed(2)}`
         );
@@ -217,7 +244,11 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="checkout-page__points-earn">
-                  Earn <strong>{(flightPointsEarned * Number(passengers)).toLocaleString()}</strong> Yahoo Points
+                  {simLoading ? (
+                    <>Estimating earn<span className="checkout-page__sim-dots">...</span></>
+                  ) : (
+                    <>Earn <strong>{(simEarn != null ? simEarn : flightPointsEarned * Number(passengers)).toLocaleString()}</strong> Yahoo Points</>
+                  )}
                 </div>
               </>
             ) : (
@@ -262,11 +293,13 @@ export default function CheckoutPage() {
                   {checkIn && <span>Check-in: {checkIn}</span>}
                 </div>
 
-                {incentive && (
-                  <div className="checkout-page__points-earn">
-                    Earn <strong>{(incentive.totalEarnPoints * nights).toLocaleString()}</strong> Yahoo Points
-                  </div>
-                )}
+                <div className="checkout-page__points-earn">
+                  {simLoading ? (
+                    <>Estimating earn<span className="checkout-page__sim-dots">...</span></>
+                  ) : (
+                    <>Earn <strong>{(simEarn != null ? simEarn : (incentive ? incentive.totalEarnPoints * nights : 0)).toLocaleString()}</strong> Yahoo Points</>
+                  )}
+                </div>
               </>
             )}
           </div>
