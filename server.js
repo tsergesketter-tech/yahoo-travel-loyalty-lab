@@ -471,60 +471,29 @@ app.post("/api/loyalty/transactions", async (req, res) => {
 // Member Badges (SOQL)
 app.get("/api/loyalty/badges", async (req, res) => {
   try {
-    const membershipNumber = req.query.membershipNumber || DEFAULT_MEMBERSHIP;
-
     const q = encodeURIComponent(
-      `SELECT Id, Name, LoyaltyProgramMemberId, LoyaltyProgramMember.MembershipNumber, ` +
-      `LoyaltyProgramBadge.Name, LoyaltyProgramBadge.Description, ` +
-      `LoyaltyProgramBadge.ImageUrl, LoyaltyProgramBadge.IsActive, ` +
-      `Status, AcquiredDate ` +
-      `FROM LoyaltyMemberBadge ` +
-      `WHERE LoyaltyProgramMember.MembershipNumber = '${membershipNumber}'`
+      `SELECT Id, Name, Description, ImageUrl ` +
+      `FROM LoyaltyProgramBadge ` +
+      `WHERE LoyaltyProgramId IN ` +
+      `(SELECT Id FROM LoyaltyProgram WHERE Name = '${SF_LOYALTY_PROGRAM}')`
     );
 
     const sf = await sfFetch(`/services/data/${SF_API_VERSION}/query?q=${q}`);
     const data = await sf.json();
 
     if (!sf.ok) {
-      // Badge objects may not exist — try alternative approach
-      console.warn("[badges] Primary query failed, trying LoyaltyProgramBadge only:", data);
-      const fallbackQ = encodeURIComponent(
-        `SELECT Id, Name, Description, ImageUrl, IsActive ` +
-        `FROM LoyaltyProgramBadge ` +
-        `WHERE LoyaltyProgramId IN ` +
-        `(SELECT Id FROM LoyaltyProgram WHERE Name = '${SF_LOYALTY_PROGRAM}') AND IsActive = true`
-      );
-      const fallbackSf = await sfFetch(`/services/data/${SF_API_VERSION}/query?q=${fallbackQ}`);
-      const fallbackData = await fallbackSf.json();
-
-      if (!fallbackSf.ok) {
-        console.warn("[badges] Badge objects not available:", fallbackData);
-        return res.json({ badges: [], available: false });
-      }
-
-      const badges = (fallbackData.records || []).map((b) => ({
-        id: b.Id,
-        name: b.Name,
-        description: b.Description,
-        imageUrl: b.ImageUrl,
-        isActive: b.IsActive,
-        acquired: false,
-      }));
-      return res.json({ badges, available: true, memberSpecific: false });
+      console.warn("[badges] Query failed:", data);
+      return res.json({ badges: [], available: false });
     }
 
     const badges = (data.records || []).map((b) => ({
       id: b.Id,
-      name: b.LoyaltyProgramBadge?.Name || b.Name,
-      description: b.LoyaltyProgramBadge?.Description || null,
-      imageUrl: b.LoyaltyProgramBadge?.ImageUrl || null,
-      isActive: b.LoyaltyProgramBadge?.IsActive ?? true,
-      status: b.Status,
-      acquiredDate: b.AcquiredDate,
-      acquired: true,
+      name: b.Name,
+      description: b.Description,
+      imageUrl: b.ImageUrl,
     }));
 
-    res.json({ badges, available: true, memberSpecific: true });
+    res.json({ badges, totalCount: data.totalSize || badges.length });
   } catch (e) {
     console.error("[badges] Error:", e.message);
     res.status(500).json({ error: e.message });
