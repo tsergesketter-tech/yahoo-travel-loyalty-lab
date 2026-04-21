@@ -471,11 +471,14 @@ app.post("/api/loyalty/transactions", async (req, res) => {
 // Member Badges (SOQL)
 app.get("/api/loyalty/badges", async (req, res) => {
   try {
+    const membershipNumber = req.query.membershipNumber || DEFAULT_MEMBERSHIP;
+
     const q = encodeURIComponent(
-      `SELECT Id, Name, Description, ImageUrl ` +
-      `FROM LoyaltyProgramBadge ` +
-      `WHERE LoyaltyProgramId IN ` +
-      `(SELECT Id FROM LoyaltyProgram WHERE Name = '${SF_LOYALTY_PROGRAM}')`
+      `SELECT Id, Name, ` +
+      `LoyaltyProgramBadge.Name, LoyaltyProgramBadge.Description, LoyaltyProgramBadge.ImageUrl, ` +
+      `Status, LoyaltyProgramMember.MembershipNumber ` +
+      `FROM LoyaltyProgramMemberBadge ` +
+      `WHERE LoyaltyProgramMember.MembershipNumber = '${membershipNumber}'`
     );
 
     const sf = await sfFetch(`/services/data/${SF_API_VERSION}/query?q=${q}`);
@@ -483,14 +486,15 @@ app.get("/api/loyalty/badges", async (req, res) => {
 
     if (!sf.ok) {
       console.warn("[badges] Query failed:", data);
-      return res.json({ badges: [], available: false });
+      return res.json({ badges: [], totalCount: 0 });
     }
 
     const badges = (data.records || []).map((b) => ({
       id: b.Id,
-      name: b.Name,
-      description: b.Description,
-      imageUrl: b.ImageUrl,
+      name: b.LoyaltyProgramBadge?.Name || b.Name,
+      description: b.LoyaltyProgramBadge?.Description || null,
+      imageUrl: b.LoyaltyProgramBadge?.ImageUrl || null,
+      status: b.Status,
     }));
 
     res.json({ badges, totalCount: data.totalSize || badges.length });

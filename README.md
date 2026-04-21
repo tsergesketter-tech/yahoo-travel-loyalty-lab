@@ -495,41 +495,45 @@ Retrieve member vouchers.
 
 ### `GET /api/loyalty/badges`
 
-Retrieve program badges (achievements members can earn).
+Retrieve badges earned by a specific loyalty member.
 
-**SF API:** SOQL on `LoyaltyProgramBadge`
+**SF API:** SOQL on `LoyaltyProgramMemberBadge` joined to `LoyaltyProgramBadge`
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
-| `membershipNumber` | query | No | Currently unused — returns all program badges |
+| `membershipNumber` | query | No | Defaults to `YAH0000001` |
 
 **Response:**
 ```json
 {
   "badges": [
     {
-      "id": "0w8Hn000000XbAiIAK",
+      "id": "0w9Hn000000XbIuIAK",
       "name": "5 Day Fantasy Streak",
       "description": "Play Fantasy 5 Days Running",
-      "imageUrl": "https://trailsignup-78f9c4eccfa797.file.force.com/sfc/servlet.shepherd/version/download/068Hn00000OcpX2"
+      "imageUrl": "https://trailsignup-78f9c4eccfa797.file.force.com/sfc/servlet.shepherd/version/download/068Hn00000OcpX2",
+      "status": "Active"
     },
     {
-      "id": "0w8Hn000000XbAjIAK",
+      "id": "0w9Hn000000XbIvIAK",
       "name": "International Traveler",
       "description": "Book Trips to 3 Different Continents",
-      "imageUrl": null
+      "imageUrl": null,
+      "status": "Active"
     },
     {
-      "id": "0w8Hn000000XbAdIAK",
+      "id": "0w9Hn000000XbItIAK",
       "name": "Mail Champ",
       "description": "Keep 0 Inbox for 7 consecutive Days!",
-      "imageUrl": null
+      "imageUrl": null,
+      "status": "Active"
     },
     {
-      "id": "0w8Hn000000XbAnIAK",
+      "id": "0w9Hn000000XbIwIAK",
       "name": "Digital Oracle",
       "description": "Upgrade to Finance Premium",
-      "imageUrl": null
+      "imageUrl": null,
+      "status": "Active"
     }
   ],
   "totalCount": 4
