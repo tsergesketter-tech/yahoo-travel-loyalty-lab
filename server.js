@@ -421,8 +421,8 @@ app.post("/api/loyalty/transactions", async (req, res) => {
     params.set("pageNumber", String(pageNumber));
     if (journalTypeName) params.set("journalTypeName", journalTypeName);
     if (journalSubTypeName) params.set("journalSubTypeName", journalSubTypeName);
-    if (periodStartDate) params.set("periodStartDate", periodStartDate);
-    if (periodEndDate) params.set("periodEndDate", periodEndDate);
+    if (periodStartDate) params.set("periodStartDate", periodStartDate.includes("T") ? periodStartDate : `${periodStartDate}T00:00:00.000Z`);
+    if (periodEndDate) params.set("periodEndDate", periodEndDate.includes("T") ? periodEndDate : `${periodEndDate}T23:59:59.000Z`);
 
     const path =
       `/services/data/v66.0/loyalty/programs/${encodeURIComponent(SF_LOYALTY_PROGRAM)}` +

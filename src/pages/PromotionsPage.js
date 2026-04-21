@@ -3,6 +3,57 @@ import promotions from "../data/promotions";
 import { useApp } from "../context/AppContext";
 import { fetchPromotions, fetchEngagementTrail } from "../services/sfApi";
 
+function categorizePromo(name) {
+  const n = (name || "").toLowerCase();
+  if (n.includes("travel") || n.includes("hotel") || n.includes("flight") || n.includes("mediterranean") || n.includes("tropical") || n.includes("nomad") || n.includes("luxury") || n.includes("long haul")) return "travel";
+  if (n.includes("finance") || n.includes("portfolio") || n.includes("briefing")) return "finance";
+  if (n.includes("fantasy") || n.includes("madness") || n.includes("championship")) return "fantasy";
+  if (n.includes("sports") || n.includes("game day")) return "sports";
+  if (n.includes("mail") || n.includes("inbox")) return "mail";
+  if (n.includes("reward") || n.includes("welcome") || n.includes("member")) return "rewards";
+  return "other";
+}
+
+const FALLBACK_IMAGES = {
+  travel: [
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=340&fit=crop&q=80",
+  ],
+  finance: [
+    "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&h=340&fit=crop&q=80",
+  ],
+  fantasy: [
+    "https://images.unsplash.com/photo-1461896836934-bd45ba8fcfdb?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600&h=340&fit=crop&q=80",
+  ],
+  sports: [
+    "https://images.unsplash.com/photo-1471295253337-3ceaaedca402?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=600&h=340&fit=crop&q=80",
+  ],
+  mail: [
+    "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=600&h=340&fit=crop&q=80",
+  ],
+  rewards: [
+    "https://images.unsplash.com/photo-1553729459-afe8f2e2ed65?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&h=340&fit=crop&q=80",
+  ],
+  other: [
+    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=340&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&h=340&fit=crop&q=80",
+  ],
+};
+
+function pickFallbackImage(name) {
+  const cat = categorizePromo(name);
+  const imgs = FALLBACK_IMAGES[cat] || FALLBACK_IMAGES.other;
+  let hash = 0;
+  for (let i = 0; i < (name || "").length; i++) hash = ((hash << 5) - hash + (name || "").charCodeAt(i)) | 0;
+  return imgs[Math.abs(hash) % imgs.length];
+}
+
 const REGION_VISUALS = {
   Europe: { gradient: "linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)", icon: "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6", label: "Europe" },
   APAC: { gradient: "linear-gradient(135deg, #0d1b2a 0%, #1b2838 40%, #2d4a5e 100%)", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93z", label: "Asia-Pacific" },
@@ -19,13 +70,15 @@ function getVisual(regionTag, type) {
   return REGION_VISUALS[regionTag] || REGION_VISUALS.default;
 }
 
-function PromoImage({ imageUrl, regionTag, type }) {
+function PromoImage({ imageUrl, regionTag, type, name }) {
   const visual = getVisual(regionTag, type);
-  if (imageUrl) {
+  const src = imageUrl || pickFallbackImage(name);
+  if (src) {
     return (
       <div className="pc__image-wrap">
-        <img src={imageUrl} alt="" className="pc__image" />
+        <img src={src} alt="" className="pc__image" loading="lazy" />
         <div className="pc__image-overlay" />
+        {!imageUrl && <span className="pc__image-region">{visual.label}</span>}
       </div>
     );
   }
@@ -100,17 +153,6 @@ const CATEGORIES = [
   { key: "mail", label: "Mail" },
   { key: "rewards", label: "Rewards" },
 ];
-
-function categorizePromo(name) {
-  const n = (name || "").toLowerCase();
-  if (n.includes("travel") || n.includes("hotel") || n.includes("flight") || n.includes("mediterranean") || n.includes("tropical") || n.includes("nomad") || n.includes("luxury") || n.includes("long haul")) return "travel";
-  if (n.includes("finance") || n.includes("portfolio") || n.includes("briefing")) return "finance";
-  if (n.includes("fantasy") || n.includes("madness") || n.includes("championship")) return "fantasy";
-  if (n.includes("sports") || n.includes("game day")) return "sports";
-  if (n.includes("mail") || n.includes("inbox")) return "mail";
-  if (n.includes("reward") || n.includes("welcome") || n.includes("member")) return "rewards";
-  return "other";
-}
 
 function PromotionsPage() {
   const { member } = useApp();
@@ -261,7 +303,7 @@ function PromotionsPage() {
 
               return (
                 <article key={promo.Id} className="pc pc--sf">
-                  <PromoImage imageUrl={promo.PromotionImageUrl} regionTag={null} type="sf" />
+                  <PromoImage imageUrl={promo.PromotionImageUrl} regionTag={null} type="sf" name={promo.Name} />
                   <div className="pc__body">
                     <div className="pc__top-row">
                       <div className="pc__tags">
@@ -346,7 +388,7 @@ function PromotionsPage() {
 
               return (
                 <article key={ep.Id} className="pc pc--eligible">
-                  <PromoImage imageUrl={ep.PromotionImageUrl} regionTag={null} type={isMilestone ? "milestone" : "sf"} />
+                  <PromoImage imageUrl={ep.PromotionImageUrl} regionTag={null} type={isMilestone ? "milestone" : "sf"} name={ep.PromotionName} />
                   <div className="pc__body">
                     <div className="pc__top-row">
                       <div className="pc__tags">
@@ -393,7 +435,7 @@ function PromotionsPage() {
           {promotions.map((promo) => {
             return (
               <article key={promo.id} className="pc">
-                <PromoImage imageUrl={promo.imageUrl} regionTag={promo.regionTag} />
+                <PromoImage imageUrl={promo.imageUrl} regionTag={promo.regionTag} name={promo.name} />
                 <div className="pc__body">
                   <div className="pc__top-row">
                     <div className="pc__tags">
