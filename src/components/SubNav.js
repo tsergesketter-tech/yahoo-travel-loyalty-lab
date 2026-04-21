@@ -8,6 +8,7 @@ const navItems = [
   { label: "Rental cars", to: "/hotels" },
   { label: "Travel advice", to: "/", hasDropdown: true },
   { label: "Travel deals", to: "/promotions" },
+  { label: "Platform Events", to: "/events" },
   { label: "Travel gear", to: "/" },
   { label: "Travel guides", to: "/" },
   { label: "Travel news", to: "/" },

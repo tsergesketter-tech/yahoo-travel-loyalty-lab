@@ -587,6 +587,75 @@ app.post("/api/loyalty/simulate", async (req, res) => {
   }
 });
 
+// Publish Booking Platform Events via Composite API
+app.post("/api/loyalty/platform-events", async (req, res) => {
+  try {
+    const { events = [] } = req.body || {};
+    if (!events.length) {
+      return res.status(400).json({ error: "events[] is required" });
+    }
+
+    const compositeRequest = events.map((evt, i) => ({
+      method: "POST",
+      url: `/services/data/${SF_API_VERSION}/sobjects/Booking_Event__e`,
+      referenceId: `event${i + 1}`,
+      body: {
+        External_Transaction_Number__c: evt.ExternalTransactionNumber || `PE-${Date.now()}-${i}`,
+        Membership_Number__c: evt.MembershipNumber || DEFAULT_MEMBERSHIP,
+        Journal_Type_Name__c: evt.JournalTypeName || "Accrual",
+        Journal_Sub_Type_Name__c: evt.JournalSubTypeName || "Hotel Booking",
+        Activity_Date__c: evt.ActivityDate || new Date().toISOString(),
+        Currency_Iso_Code__c: evt.CurrencyIsoCode || "USD",
+        Transaction_Amount__c: Number(evt.TransactionAmount) || 0,
+        Channel__c: evt.Channel || "Web",
+        LOB__c: evt.LOB__c || "",
+        Destination_City__c: evt.Destination_City__c || "",
+        Destination_Country__c: evt.Destination_Country__c || "",
+        Length_of_Stay__c: evt.Length_of_Stay__c || "",
+        Start_Date__c: evt.StartDate || null,
+        End_Date__c: evt.EndDate || null,
+        Booking_Date__c: evt.BookingDate || new Date().toISOString(),
+        Comment__c: evt.Comment || "",
+        Payment_Type__c: evt.Payment_Type__c || "",
+        Cash_Paid__c: evt.Cash_Paid__c || "",
+        Points_to_Redeem__c: evt.Points_to_Redeem__c || "",
+      },
+    }));
+
+    const payload = { allOrNone: true, compositeRequest };
+    console.log("[platform-events] POST composite →", JSON.stringify(payload, null, 2));
+
+    const sf = await sfFetch(`/services/data/${SF_API_VERSION}/composite/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const data = await sf.json();
+
+    if (!sf.ok) {
+      return res.status(sf.status).json({ error: data?.[0]?.message || data?.message || `HTTP ${sf.status}`, raw: data });
+    }
+
+    const results = (data.compositeResponse || []).map((r) => ({
+      referenceId: r.referenceId,
+      statusCode: r.httpStatusCode,
+      id: r.body?.id || null,
+      success: r.httpStatusCode >= 200 && r.httpStatusCode < 300,
+      errors: r.body?.errors || [],
+    }));
+
+    const allSuccess = results.every((r) => r.success);
+    res.status(allSuccess ? 200 : 207).json({
+      success: allSuccess,
+      published: results.filter((r) => r.success).length,
+      total: results.length,
+      results,
+    });
+  } catch (e) {
+    console.error("[platform-events] Error:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // SOQL query proxy (for exploration)
 app.get("/api/loyalty/query", async (req, res) => {
   try {

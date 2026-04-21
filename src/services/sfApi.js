@@ -252,6 +252,19 @@ export async function postTransactionJournal(transactionJournals) {
   return res.json();
 }
 
+export async function publishPlatformEvents(events) {
+  const res = await fetch(`${API_BASE}/api/loyalty/platform-events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ events }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || err.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 export function buildAccrualJournal({
   bookingId, membershipNumber, amount, nights, city, country,
   hotelName, checkIn, checkOut, channel = "Web",
