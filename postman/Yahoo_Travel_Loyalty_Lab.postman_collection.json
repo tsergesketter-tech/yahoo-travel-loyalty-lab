@@ -1,0 +1,454 @@
+{
+  "info": {
+    "name": "Yahoo Travel Loyalty Lab",
+    "description": "API collection for Yahoo Travel Loyalty Lab — Salesforce Loyalty Management integration.\n\nSet the `base_url` variable to your server URL (e.g. http://localhost:3002 or your Heroku app URL).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "membershipNumber",
+      "value": "YAH0000001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Setup",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Verify the server is running and connected to the Yahoo Rewards program."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Member Profile",
+      "item": [
+        {
+          "name": "Get Member Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/member-profile?membershipNumber={{membershipNumber}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "member-profile"],
+              "query": [
+                {
+                  "key": "membershipNumber",
+                  "value": "{{membershipNumber}}"
+                }
+              ]
+            },
+            "description": "Retrieve full member profile including points balances, tier, currencies, and enrollment info."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Get Transaction Ledger — All Accruals",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"membershipNumber\": \"{{membershipNumber}}\",\n  \"journalTypeName\": \"Accrual\",\n  \"pageNumber\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "transactions"]
+            },
+            "description": "Query transaction ledger summary filtered by journal type. Supports pagination."
+          }
+        },
+        {
+          "name": "Get Transaction Ledger — Hotel Bookings Only",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"membershipNumber\": \"{{membershipNumber}}\",\n  \"journalTypeName\": \"Accrual\",\n  \"journalSubTypeName\": \"Hotel Booking\",\n  \"pageNumber\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "transactions"]
+            },
+            "description": "Filter transactions by sub-type (Hotel Booking, Flight Booking, etc.)."
+          }
+        },
+        {
+          "name": "Get Transaction Ledger — Date Range",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"membershipNumber\": \"{{membershipNumber}}\",\n  \"journalTypeName\": \"Accrual\",\n  \"periodStartDate\": \"2026-04-01\",\n  \"periodEndDate\": \"2026-04-30\",\n  \"pageNumber\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "transactions"]
+            },
+            "description": "Query transactions within a specific date range."
+          }
+        },
+        {
+          "name": "Get Transaction Ledger — Redemptions",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"membershipNumber\": \"{{membershipNumber}}\",\n  \"journalTypeName\": \"Redemption\",\n  \"pageNumber\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "transactions"]
+            },
+            "description": "Query redemption transactions only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transaction Journals",
+      "item": [
+        {
+          "name": "Post Accrual — Hotel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionJournals\": [\n    {\n      \"ExternalTransactionNumber\": \"BK-POSTMAN-001\",\n      \"External_ID__c\": \"BK-POSTMAN-001\",\n      \"MembershipNumber\": \"{{membershipNumber}}\",\n      \"JournalTypeName\": \"Accrual\",\n      \"JournalSubTypeName\": \"Hotel Booking\",\n      \"ActivityDate\": \"2026-04-20T15:00:00.000Z\",\n      \"CurrencyIsoCode\": \"USD\",\n      \"TransactionAmount\": \"475\",\n      \"Channel\": \"Web\",\n      \"Payment_Type__c\": \"Cash\",\n      \"Cash_Paid__c\": \"475\",\n      \"LOB__c\": \"Hotel\",\n      \"Destination_City__c\": \"Paris\",\n      \"Destination_Country__c\": \"France\",\n      \"StartDate\": \"2026-05-01T14:00:00.000Z\",\n      \"EndDate\": \"2026-05-04T11:00:00.000Z\",\n      \"Length_of_Stay__c\": \"3\",\n      \"BookingDate\": \"2026-04-20T15:00:00.000Z\",\n      \"Comment\": \"Le Marais Hotel — 3 nights\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/transaction-journal",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "transaction-journal"]
+            },
+            "description": "Post a real hotel booking accrual transaction journal. This creates actual records in Salesforce and triggers point processing rules."
+          }
+        },
+        {
+          "name": "Post Accrual — Flight Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionJournals\": [\n    {\n      \"ExternalTransactionNumber\": \"BK-FLIGHT-POSTMAN-001\",\n      \"External_ID__c\": \"BK-FLIGHT-POSTMAN-001\",\n      \"MembershipNumber\": \"{{membershipNumber}}\",\n      \"JournalTypeName\": \"Accrual\",\n      \"JournalSubTypeName\": \"Flight Booking\",\n      \"ActivityDate\": \"2026-04-20T15:00:00.000Z\",\n      \"CurrencyIsoCode\": \"USD\",\n      \"TransactionAmount\": \"289\",\n      \"Channel\": \"Web\",\n      \"Payment_Type__c\": \"Cash\",\n      \"Cash_Paid__c\": \"289\",\n      \"LOB__c\": \"Flight\",\n      \"Destination_City__c\": \"Tokyo\",\n      \"Destination_Country__c\": \"Japan\",\n      \"Comment\": \"SFO to NRT — Economy\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/transaction-journal",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "transaction-journal"]
+            },
+            "description": "Post a flight booking accrual transaction journal."
+          }
+        },
+        {
+          "name": "Post Redemption — Redeem Points",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionJournals\": [\n    {\n      \"ExternalTransactionNumber\": \"BK-REDEEM-POSTMAN-001\",\n      \"External_ID__c\": \"BK-REDEEM-POSTMAN-001\",\n      \"MembershipNumber\": \"{{membershipNumber}}\",\n      \"JournalTypeName\": \"Redemption\",\n      \"JournalSubTypeName\": \"Redeem Points\",\n      \"ActivityDate\": \"2026-04-20T15:00:00.000Z\",\n      \"CurrencyIsoCode\": \"USD\",\n      \"TransactionAmount\": \"0\",\n      \"Points_to_Redeem__c\": \"5000\",\n      \"Channel\": \"Web\",\n      \"LOB__c\": \"Hotel\",\n      \"Destination_City__c\": \"New York\",\n      \"Destination_Country__c\": \"United States\",\n      \"Comment\": \"Redeemed 5000 pts — The Standard NYC\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/transaction-journal",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "transaction-journal"]
+            },
+            "description": "Post a redemption transaction to deduct points from the member's balance."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Simulation",
+      "item": [
+        {
+          "name": "Simulate Earn — Hotel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"membershipNumber\": \"{{membershipNumber}}\",\n  \"transactionJournals\": [\n    {\n      \"JournalTypeName\": \"Accrual\",\n      \"JournalSubTypeName\": \"Hotel Booking\",\n      \"TransactionAmount\": 500,\n      \"CurrencyIsoCode\": \"USD\",\n      \"LOB__c\": \"Hotel\",\n      \"Destination_City__c\": \"Paris\",\n      \"Destination_Country__c\": \"France\",\n      \"Length_of_Stay__c\": \"3\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/simulate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "simulate"]
+            },
+            "description": "Simulate a hotel booking to preview how many points would be earned. Does NOT create any records."
+          }
+        },
+        {
+          "name": "Simulate Earn — Flight Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"membershipNumber\": \"{{membershipNumber}}\",\n  \"transactionJournals\": [\n    {\n      \"JournalTypeName\": \"Accrual\",\n      \"JournalSubTypeName\": \"Flight Booking\",\n      \"TransactionAmount\": 350,\n      \"CurrencyIsoCode\": \"USD\",\n      \"LOB__c\": \"Flight\",\n      \"Destination_City__c\": \"Tokyo\",\n      \"Destination_Country__c\": \"Japan\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/simulate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "simulate"]
+            },
+            "description": "Simulate a flight booking to preview points earned."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Promotions",
+      "item": [
+        {
+          "name": "Get All Promotions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/promotions?membershipNumber={{membershipNumber}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "promotions"],
+              "query": [
+                {
+                  "key": "membershipNumber",
+                  "value": "{{membershipNumber}}"
+                }
+              ]
+            },
+            "description": "Fetch all active promotions, member enrollment status, and eligible promotions for this member."
+          }
+        },
+        {
+          "name": "Get Eligible Promotions — New York Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cart\": {\n    \"cartDetails\": [\n      {\n        \"activityStartDate\": \"2026-05-20T00:00:00.000Z\",\n        \"membershipNumber\": \"{{membershipNumber}}\",\n        \"currencyISOCode\": \"USD\",\n        \"transactionAmount\": 1000,\n        \"origin\": \"San Francisco\",\n        \"destination\": \"New York\"\n      }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/eligible-promotions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "eligible-promotions"]
+            },
+            "description": "Cart-based promotion lookup. Send origin, destination, and transactionAmount (must be > $500) to find applicable promotions and discounts."
+          }
+        },
+        {
+          "name": "Get Eligible Promotions — Paris Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cart\": {\n    \"cartDetails\": [\n      {\n        \"activityStartDate\": \"2026-06-01T00:00:00.000Z\",\n        \"membershipNumber\": \"{{membershipNumber}}\",\n        \"currencyISOCode\": \"USD\",\n        \"transactionAmount\": 2500,\n        \"origin\": \"Los Angeles\",\n        \"destination\": \"Paris\"\n      }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/eligible-promotions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "eligible-promotions"]
+            },
+            "description": "Check eligible promotions for a Paris trip."
+          }
+        },
+        {
+          "name": "Get Engagement Trail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/engagement-trail/0c8Hn0000011qWVIAY?membershipNumber={{membershipNumber}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "engagement-trail", "0c8Hn0000011qWVIAY"],
+              "query": [
+                {
+                  "key": "membershipNumber",
+                  "value": "{{membershipNumber}}"
+                }
+              ]
+            },
+            "description": "Get step-by-step engagement trail progress for a specific promotion. Replace the promotion ID in the URL with a valid one from Get All Promotions."
+          }
+        },
+        {
+          "name": "Evaluate Promotion",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"membershipNumber\": \"{{membershipNumber}}\",\n  \"promotionId\": \"0c8Hn0000011qoJIAQ\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/promotion-evaluation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "promotion-evaluation"]
+            },
+            "description": "Evaluate and execute promotion rules for a member. Replace promotionId with a valid ID."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vouchers & Badges",
+      "item": [
+        {
+          "name": "Get Member Vouchers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/vouchers?membershipNumber={{membershipNumber}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "vouchers"],
+              "query": [
+                {
+                  "key": "membershipNumber",
+                  "value": "{{membershipNumber}}"
+                }
+              ]
+            },
+            "description": "Retrieve all vouchers for a loyalty member."
+          }
+        },
+        {
+          "name": "Get Member Badges",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/badges?membershipNumber={{membershipNumber}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "badges"],
+              "query": [
+                {
+                  "key": "membershipNumber",
+                  "value": "{{membershipNumber}}"
+                }
+              ]
+            },
+            "description": "Retrieve badges (achievements) for a loyalty member."
+          }
+        }
+      ]
+    },
+    {
+      "name": "SOQL Explorer",
+      "item": [
+        {
+          "name": "Query — Active Promotions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/query?q=SELECT Id, Name, LoyaltyPromotionType, StartDate, EndDate FROM Promotion WHERE IsActive = true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "query"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "SELECT Id, Name, LoyaltyPromotionType, StartDate, EndDate FROM Promotion WHERE IsActive = true"
+                }
+              ]
+            },
+            "description": "Run arbitrary SOQL queries against the connected Salesforce org."
+          }
+        },
+        {
+          "name": "Query — Loyalty Program Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/query?q=SELECT Id, MembershipNumber, MemberStatus, EnrollmentDate FROM LoyaltyProgramMember LIMIT 10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "query"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "SELECT Id, MembershipNumber, MemberStatus, EnrollmentDate FROM LoyaltyProgramMember LIMIT 10"
+                }
+              ]
+            },
+            "description": "Query loyalty program members."
+          }
+        },
+        {
+          "name": "Query — Transaction Journals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/loyalty/query?q=SELECT Id, TransactionJournalNumber, JournalTypeName, JournalSubTypeName, TransactionAmount, ActivityDate FROM TransactionJournal ORDER BY ActivityDate DESC LIMIT 20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "loyalty", "query"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "SELECT Id, TransactionJournalNumber, JournalTypeName, JournalSubTypeName, TransactionAmount, ActivityDate FROM TransactionJournal ORDER BY ActivityDate DESC LIMIT 20"
+                }
+              ]
+            },
+            "description": "Query recent transaction journals directly via SOQL."
+          }
+        }
+      ]
+    }
+  ]
+}

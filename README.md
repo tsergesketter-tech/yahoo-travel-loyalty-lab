@@ -1,70 +1,597 @@
-# Getting Started with Create React App
+# Yahoo Travel Loyalty Lab
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack demo application integrating **Salesforce Loyalty Management** with a React travel booking frontend. Search hotels and flights, earn and redeem Yahoo Points, view promotions, and track transaction history — all powered by live Salesforce APIs.
 
-## Available Scripts
+**Live:** [yahoo-app on Heroku](https://yahoo-app-aeedb031fccb.herokuapp.com)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Architecture
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```
+┌─────────────────────────────────────────────────────┐
+│  React Frontend (port 3000 dev / served from build) │
+│  - Hotel & Flight Search                            │
+│  - Member Profile & Transaction Ledger              │
+│  - Promotions & Engagement Trails                   │
+│  - Checkout with SF Transaction Journal posting     │
+└──────────────────────┬──────────────────────────────┘
+                       │ fetch("/api/loyalty/...")
+┌──────────────────────▼──────────────────────────────┐
+│  Express API Server (server.js)                     │
+│  - OAuth2 client_credentials token management       │
+│  - Proxy to Salesforce REST + Connect APIs          │
+│  - Response normalization                           │
+└──────────────────────┬──────────────────────────────┘
+                       │ SF REST API v66.0
+┌──────────────────────▼──────────────────────────────┐
+│  Salesforce Loyalty Management                      │
+│  - Program: "Yahoo Rewards"                         │
+│  - Currencies: Y! Points, Tier Points               │
+│  - Promotions, Vouchers, Badges, Engagement Trails  │
+│  - Transaction Journal Processing                   │
+└─────────────────────────────────────────────────────┘
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## Quick Start
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Prerequisites
+- Node.js >= 18
+- A Salesforce org with Loyalty Management enabled
+- Connected App credentials (client_credentials flow)
 
-### `npm run build`
+### Local Development
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+# 1. Clone
+git clone https://github.com/tsergesketter-tech/yahoo-travel-loyalty-lab.git
+cd yahoo-travel-loyalty-lab
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your Salesforce credentials
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# 3. Install dependencies
+npm install
 
-### `npm run eject`
+# 4. Start backend API server
+npm run server          # runs on :3002
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# 5. Start React dev server (separate terminal)
+npm run dev             # runs on :3000
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Environment Variables
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `REACT_APP_SF_CLIENT_ID` | Connected App consumer key | `3MVG9OGq41F...` |
+| `REACT_APP_SF_CLIENT_SECRET` | Connected App consumer secret | `1257EC8143B...` |
+| `REACT_APP_SF_LOGIN_URL` | Salesforce instance URL | `https://myorg.my.salesforce.com` |
+| `REACT_APP_SF_API_VERSION` | SF API version | `v66.0` |
+| `REACT_APP_API_URL` | Backend URL (local dev only) | `http://localhost:3002` |
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Heroku Deployment
 
-## Learn More
+The app is configured for Heroku out of the box:
+- `heroku-postbuild` builds the React frontend
+- `npm start` runs the Express server which serves the build folder + API
+- Set the four `REACT_APP_SF_*` config vars in Heroku Settings
+- No need to set `REACT_APP_API_URL` — defaults to same-origin
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## API Reference
 
-### Code Splitting
+Base URL: `http://localhost:3002` (local) or your Heroku app URL
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### `GET /api/health`
 
-### Analyzing the Bundle Size
+Health check. Returns server status and program name.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+**Response:**
+```json
+{
+  "ok": true,
+  "program": "Yahoo Rewards"
+}
+```
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### `GET /api/loyalty/member-profile`
 
-### Advanced Configuration
+Retrieve a loyalty member's full profile including points balances, tier, and enrollment info.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+**SF API:** `GET /services/data/v66.0/loyalty-programs/{program}/members?membershipNumber={num}`
 
-### Deployment
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `membershipNumber` | query | Yes | e.g. `YAH0000001` |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+**Response:**
+```json
+{
+  "associatedContact": {
+    "contactId": "003Hn00002meRspIAE",
+    "email": null,
+    "firstName": "Elliott",
+    "lastName": "Dumville"
+  },
+  "enrollmentDate": "2026-04-01",
+  "loyaltyProgramMemberId": "0lMHn0000011hY2MAI",
+  "loyaltyProgramName": "Yahoo Rewards",
+  "memberCurrencies": [
+    {
+      "loyaltyMemberCurrencyName": "Y! Points",
+      "pointsBalance": 55391.5,
+      "totalPointsAccrued": 59891.5,
+      "totalPointsRedeemed": 4500,
+      "lastAccrualProcessedDate": "2026-04-21T00:19:34.000Z"
+    }
+  ],
+  "memberTiers": [
+    {
+      "loyaltyMemberTierName": "Explorer",
+      "tierSequenceNumber": 1
+    }
+  ],
+  "membershipNumber": "YAH0000001",
+  "memberStatus": "Active"
+}
+```
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### `POST /api/loyalty/transactions`
+
+Query the Transaction Ledger Summary with filtering and pagination.
+
+**SF API:** `GET /services/data/v66.0/loyalty/programs/{program}/members/{membership}/transaction-ledger-summary`
+
+**Request Body:**
+```json
+{
+  "membershipNumber": "YAH0000001",
+  "pageNumber": 1,
+  "journalTypeName": "Accrual",
+  "journalSubTypeName": "Hotel Booking",
+  "periodStartDate": "2026-04-01",
+  "periodEndDate": "2026-04-30"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `membershipNumber` | string | No | Defaults to `YAH0000001` |
+| `pageNumber` | number | No | Defaults to `1` |
+| `journalTypeName` | string | No | `Accrual` or `Redemption` |
+| `journalSubTypeName` | string | No | e.g. `Hotel Booking`, `Flight Booking`, `Redeem Points` |
+| `periodStartDate` | string | No | ISO date `YYYY-MM-DD` |
+| `periodEndDate` | string | No | ISO date `YYYY-MM-DD` |
+
+**Response:**
+```json
+{
+  "items": [
+    {
+      "id": "0lVHn000000kBqzMAE",
+      "date": "2026-04-21T00:19:33.000Z",
+      "type": "Accrual",
+      "subType": "Flight Booking",
+      "pointsChange": 940.5,
+      "currencyName": "Y! Points",
+      "status": "Processed",
+      "transactionAmount": 188.1,
+      "journalId": "0lVHn000000kBqzMAE",
+      "journalNumber": "00001184",
+      "externalTransactionNumber": "BK-1776730773525"
+    }
+  ],
+  "page": 1,
+  "totalCount": 9,
+  "nextPage": null
+}
+```
+
+---
+
+### `POST /api/loyalty/transaction-journal`
+
+Post real transaction journals to Salesforce (accrual, redemption). This is NOT a simulation — it creates actual journal records and triggers point processing rules.
+
+**SF API:** `POST /services/data/v64.0/connect/realtime/loyalty/programs/{program}` with `isSimulation: false`
+
+**Request Body:**
+```json
+{
+  "transactionJournals": [
+    {
+      "ExternalTransactionNumber": "BK-1776719528997",
+      "MembershipNumber": "YAH0000001",
+      "JournalTypeName": "Accrual",
+      "JournalSubTypeName": "Hotel Booking",
+      "ActivityDate": "2026-04-20T21:12:08.000Z",
+      "CurrencyIsoCode": "USD",
+      "TransactionAmount": "3640",
+      "Channel": "Web",
+      "LOB__c": "Hotel",
+      "Destination_City__c": "Barcelona",
+      "Destination_Country__c": "Spain",
+      "Length_of_Stay__c": "7",
+      "Comment": "W Barcelona — 7 nights"
+    }
+  ]
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "journalIds": ["0lVHn000000kBquMAE"],
+  "pointsChanges": [
+    {
+      "changeInPointsBalance": 29120,
+      "loyaltyProgramCurrencyName": "Y! Points"
+    }
+  ],
+  "transactionJournals": [...]
+}
+```
+
+---
+
+### `POST /api/loyalty/simulate`
+
+Simulate a transaction to preview points earned/redeemed WITHOUT creating actual records.
+
+**SF API:** `POST /services/data/v64.0/connect/realtime/loyalty/programs/{program}` with `isSimulation: true`
+
+**Request Body:**
+```json
+{
+  "membershipNumber": "YAH0000001",
+  "transactionJournals": [
+    {
+      "JournalTypeName": "Accrual",
+      "JournalSubTypeName": "Hotel Booking",
+      "TransactionAmount": 500,
+      "CurrencyIsoCode": "USD",
+      "LOB__c": "Hotel",
+      "Destination_City__c": "Paris",
+      "Length_of_Stay__c": "3"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "index": 0,
+      "byCurrency": {
+        "Y! Points": 4000
+      },
+      "processName": "Hotel Booking",
+      "processRules": [
+        {
+          "ruleName": "Base Earn Rule",
+          "rewards": []
+        }
+      ],
+      "errorMessage": null
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Show estimated earn on hotel/flight search result cards
+- Preview points before checkout
+- Display "what if" scenarios in the Simulator tab
+
+---
+
+### `GET /api/loyalty/promotions`
+
+Fetch all active promotions, member enrollment status, and eligible promotions.
+
+**SF API:** SOQL queries on `Promotion`, `LoyaltyProgramMbrPromotion`, and `LoyaltyPgmMbrPromEligView`
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `membershipNumber` | query | No | Defaults to `YAH0000001` |
+
+**Response:**
+```json
+{
+  "promotions": [
+    {
+      "Id": "0c8Hn0000011qoJIAQ",
+      "Name": "Yahoo Travel: 5% Off New York",
+      "Description": null,
+      "StartDate": "2026-04-01",
+      "EndDate": null,
+      "LoyaltyPromotionType": null,
+      "IsActive": true,
+      "FulfillmentAction": null,
+      "IsEnrollmentRequired": false,
+      "MaximumRewardValue": null
+    }
+  ],
+  "memberPromotions": [
+    {
+      "Id": "0c9Hn000001abc",
+      "PromotionId": "0c8Hn0000011qoJ",
+      "CumulativeUsageTarget": 5,
+      "CumulativeUsageCompleted": 2,
+      "CumulativeUsageCompletePercent": 40,
+      "IsEnrollmentActive": true
+    }
+  ],
+  "eligiblePromotions": [
+    {
+      "PromotionId": "0c8Hn0000011qoJ",
+      "PromotionName": "Yahoo Travel: 5% Off New York",
+      "LoyaltyPromotionType": "Standard",
+      "StartDate": "2026-04-01",
+      "Configuration": "milestone"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/loyalty/eligible-promotions`
+
+Cart-based promotion lookup — send a cart with origin/destination to find applicable promotions and discounts.
+
+**SF API:** `POST /services/data/v64.0/global-promotions-management/eligible-promotions`
+
+**Request Body:**
+```json
+{
+  "cart": {
+    "cartDetails": [
+      {
+        "activityStartDate": "2026-05-20T00:00:00.000Z",
+        "membershipNumber": "YAH0000001",
+        "currencyISOCode": "USD",
+        "transactionAmount": 1000,
+        "origin": "San Francisco",
+        "destination": "New York"
+      }
+    ]
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "eligiblePromotions": [
+    {
+      "displayName": "Yahoo Travel: 5% Off New York",
+      "promotionId": "0c8Hn0000011qoJIAQ",
+      "isAutomatic": true,
+      "promotionEligibleRules": [
+        {
+          "ruleName": "NYC",
+          "rulePriority": 1,
+          "ruleRewards": [
+            {
+              "rewardType": "ProvideDiscount",
+              "rewardDetails": {
+                "discountLevel": "Cart",
+                "discountType": "PercentageOff",
+                "discountValue": "5.0"
+              }
+            }
+          ]
+        }
+      ],
+      "startDateTime": "2026-04-01T22:06:00.000Z"
+    }
+  ]
+}
+```
+
+**Reward Types:**
+- `ProvideDiscount` — percentage or fixed amount off
+- `CreditFixedPoints` — bonus points awarded
+
+---
+
+### `GET /api/loyalty/engagement-trail/:promotionId`
+
+Get the engagement trail (step-by-step progress) for a specific promotion.
+
+**SF API:** `GET /services/data/v63.0/loyalty/programs/{program}/members/{membership}/engagement-trail?promotionId={id}`
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `promotionId` | path | Yes | Salesforce Promotion ID |
+| `membershipNumber` | query | No | Defaults to `YAH0000001` |
+
+**Response:**
+```json
+{
+  "promotionId": "0c8Hn0000011qWVIAY",
+  "promotionName": "Engagement Trail",
+  "totalSteps": 3,
+  "completedSteps": 1,
+  "currentStepNumber": 2,
+  "overallStatus": "InProgress",
+  "totalPossiblePoints": 5000,
+  "earnedPoints": 1666,
+  "steps": [
+    {
+      "id": "step-1",
+      "name": "Book 3 Hotels",
+      "stepNumber": 1,
+      "status": "Completed",
+      "requiredCount": 3,
+      "currentCount": 3,
+      "rewardPoints": 1666
+    },
+    {
+      "id": "step-2",
+      "name": "Book 2 Flights",
+      "stepNumber": 2,
+      "status": "InProgress",
+      "requiredCount": 2,
+      "currentCount": 1,
+      "rewardPoints": 1666
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/loyalty/promotion-evaluation`
+
+Evaluate and execute promotion rules for a member.
+
+**SF API:** `POST /services/data/v64.0/loyalty/programs/{program}/promotion-evaluation-and-execution`
+
+---
+
+### `GET /api/loyalty/vouchers`
+
+Retrieve member vouchers.
+
+**SF API:** `GET /services/data/v63.0/loyalty/programs/{program}/members/{membership}/vouchers`
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `membershipNumber` | query | No | Defaults to `YAH0000001` |
+
+**Response:**
+```json
+{
+  "vouchers": [
+    {
+      "id": "0kpXX0000001234",
+      "type": "Discount Voucher",
+      "code": "YAHOO-25OFF",
+      "value": 25,
+      "currency": "USD",
+      "expiresOn": "2026-12-31",
+      "status": "Active"
+    }
+  ],
+  "totalCount": 1
+}
+```
+
+---
+
+### `GET /api/loyalty/badges`
+
+Retrieve member badges (earned achievements).
+
+**SF API:** SOQL on `LoyaltyMemberBadge` / `LoyaltyProgramBadge`
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `membershipNumber` | query | No | Defaults to `YAH0000001` |
+
+**Response:**
+```json
+{
+  "badges": [
+    {
+      "id": "0mBXX0000001234",
+      "name": "First Booking",
+      "description": "Complete your first booking",
+      "imageUrl": "https://...",
+      "isActive": true,
+      "status": "Acquired",
+      "acquiredDate": "2026-04-15",
+      "acquired": true
+    }
+  ],
+  "available": true,
+  "memberSpecific": true
+}
+```
+
+---
+
+### `GET /api/loyalty/query`
+
+SOQL query proxy for exploration and debugging.
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `q` | query | Yes | SOQL query string |
+
+**Example:**
+```
+GET /api/loyalty/query?q=SELECT Id, Name FROM Promotion WHERE IsActive = true
+```
+
+---
+
+## Frontend Pages
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Home | Featured destinations, booking shortcuts, loyalty tips |
+| `/hotels` | Hotel Search | Search with date picker, SF earn simulation per result |
+| `/stay/:id` | Hotel Detail | Room selection, earn/burn preview, SF promotions |
+| `/flights` | Flight Search | Route search with SF simulation and eligible promotions |
+| `/checkout` | Checkout | Posts transaction journals to SF on booking |
+| `/confirmation` | Confirmation | Booking success with points earned summary |
+| `/promotions` | Promotions | SF promotions with category/type/enrollment filters |
+| `/member` | Member Profile | Profile, transactions, badges, vouchers, simulator |
+
+---
+
+## Salesforce Configuration
+
+### Loyalty Program
+- **Program Name:** Yahoo Rewards
+- **Currencies:** Y! Points, Tier Points
+- **Tiers:** Explorer, Voyager, Navigator, Globetrotter
+
+### Custom Transaction Journal Fields
+| Field | API Name | Type |
+|-------|----------|------|
+| Cash Paid | `Cash_Paid__c` | Text |
+| Line of Business | `LOB__c` | Text |
+| Destination City | `Destination_City__c` | Text |
+| Destination Country | `Destination_Country__c` | Text |
+| Length of Stay | `Length_of_Stay__c` | Text |
+| Points to Redeem | `Points_to_Redeem__c` | Text |
+| Payment Type | `Payment_Type__c` | Text |
+| Booking Date | `BookingDate` | DateTime |
+| Start Date | `StartDate` | DateTime |
+| End Date | `EndDate` | DateTime |
+
+### Journal Sub-Types
+- **Accrual:** Hotel Booking, Flight Booking, Car Booking, Purchase
+- **Redemption:** Redeem Points, Redeem Reward
+
+---
+
+## Postman Collection
+
+Import `postman/Yahoo_Travel_Loyalty_Lab.postman_collection.json` into Postman. Set the `base_url` variable to your server URL.
+
+---
+
+## Tech Stack
+
+- **Frontend:** React 19, React Router 7, CSS (no framework)
+- **Backend:** Express 5, Node.js
+- **Salesforce:** Loyalty Management, Connect API, Global Promotions Management
+- **Auth:** OAuth2 client_credentials flow
+- **Deployment:** Heroku (GitHub pipeline)
