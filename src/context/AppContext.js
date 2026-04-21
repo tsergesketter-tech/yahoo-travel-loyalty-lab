@@ -81,6 +81,22 @@ export function AppProvider({ children }) {
     }
   }, [member.membershipNumber]);
 
+  const signIn = useCallback(async (membershipNumber) => {
+    setSfLoading(true);
+    try {
+      const sf = await fetchMemberProfile(membershipNumber);
+      const mapped = mapSfProfile(sf);
+      setMember((prev) => ({ ...prev, ...mapped }));
+      setSfConnected(true);
+      setSfError(null);
+      return mapped;
+    } catch (err) {
+      throw err;
+    } finally {
+      setSfLoading(false);
+    }
+  }, []);
+
   const addToast = useCallback((message) => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message }]);
@@ -217,6 +233,7 @@ export function AppProvider({ children }) {
         bookHotel,
         addToast,
         refreshMemberProfile,
+        signIn,
       }}
     >
       {children}

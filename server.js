@@ -587,6 +587,58 @@ app.post("/api/loyalty/simulate", async (req, res) => {
   }
 });
 
+// Enroll Individual Member
+app.post("/api/loyalty/enroll", async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, membershipNumber } = req.body || {};
+
+    if (!firstName || !lastName) {
+      return res.status(400).json({ error: "firstName and lastName are required" });
+    }
+
+    const payload = {
+      enrollmentDate: new Date().toISOString(),
+      memberStatus: "Active",
+      createTransactionJournals: "true",
+      transactionJournalStatementFrequency: "Monthly",
+      transactionJournalStatementMethod: "Email",
+      enrollmentChannel: "Web",
+      canReceivePromotions: "true",
+      canReceivePartnerPromotions: "true",
+      associatedContactDetails: {
+        firstName,
+        lastName,
+        allowDuplicateRecords: "false",
+      },
+    };
+    if (email) payload.associatedContactDetails.email = email;
+    if (phone) payload.associatedContactDetails.phone = phone;
+    payload.membershipNumber = membershipNumber || `YAH${Date.now().toString(36).toUpperCase()}`;
+
+    const path = `/services/data/${SF_API_VERSION}/loyalty-programs/${encodeURIComponent(SF_LOYALTY_PROGRAM)}/individual-member-enrollments`;
+
+    console.log("[enroll] POST →", JSON.stringify(payload, null, 2));
+
+    const sf = await sfFetch(path, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const data = await sf.json();
+
+    if (!sf.ok) {
+      return res.status(sf.status).json({
+        error: data?.[0]?.message || data?.message || `HTTP ${sf.status}`,
+        raw: data,
+      });
+    }
+
+    res.status(201).json(data);
+  } catch (e) {
+    console.error("[enroll] Error:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Publish Booking Platform Events via Composite API
 app.post("/api/loyalty/platform-events", async (req, res) => {
   try {
@@ -619,6 +671,7 @@ app.post("/api/loyalty/platform-events", async (req, res) => {
         Payment_Type__c: evt.Payment_Type__c || "",
         Cash_Paid__c: evt.Cash_Paid__c || "",
         Points_to_Redeem__c: evt.Points_to_Redeem__c || "",
+        Partner_Id__c: evt.PartnerId || "",
       },
     }));
 

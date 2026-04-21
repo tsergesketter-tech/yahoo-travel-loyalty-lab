@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import AuthModal from "./AuthModal";
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAuth, setShowAuth] = useState(false);
   const { member } = useApp();
   const navigate = useNavigate();
 
@@ -48,8 +50,8 @@ export default function Header() {
             </svg>
             Mail
           </button>
-          <button className="header__signin-btn" onClick={() => navigate("/member")}>
-            Sign in
+          <button className="header__signin-btn" onClick={() => setShowAuth(true)}>
+            {member.membershipNumber ? member.name || "Member" : "Sign in"}
           </button>
         </div>
 
@@ -57,6 +59,7 @@ export default function Header() {
           <span /><span /><span />
         </button>
       </div>
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </header>
   );
 }

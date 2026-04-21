@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
-import { publishPlatformEvents } from "../services/sfApi";
+import { publishPlatformEvents, PARTNER_IDS } from "../services/sfApi";
 
 const DESTINATIONS = [
   { city: "Paris", country: "France" },
@@ -49,6 +49,7 @@ function generateEvents(count, membershipNumber) {
       Destination_City__c: dest.city,
       Destination_Country__c: dest.country,
       BookingDate: new Date().toISOString(),
+      PartnerId: PARTNER_IDS["Yahoo Travel"],
       Comment: isHotel
         ? `${pick(HOTEL_NAMES)}, ${dest.city} — ${nights} nights`
         : `Flight to ${dest.city}`,

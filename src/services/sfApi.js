@@ -252,6 +252,19 @@ export async function postTransactionJournal(transactionJournals) {
   return res.json();
 }
 
+export async function enrollMember(body) {
+  const res = await fetch(`${API_BASE}/api/loyalty/enroll`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || err.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function publishPlatformEvents(events) {
   const res = await fetch(`${API_BASE}/api/loyalty/platform-events`, {
     method: "POST",
@@ -265,10 +278,17 @@ export async function publishPlatformEvents(events) {
   return res.json();
 }
 
+export const PARTNER_IDS = {
+  "Yahoo Travel": "0ldHn00000114j0IAA",
+  "Yahoo News": "0ldHn00000114j4IAA",
+  "Yahoo Finance": "0ldHn00000114j9IAA",
+};
+
 export function buildAccrualJournal({
   bookingId, membershipNumber, amount, nights, city, country,
   hotelName, checkIn, checkOut, channel = "Web",
   journalSubTypeName = "Hotel Booking",
+  partnerId,
 }) {
   return {
     ExternalTransactionNumber: bookingId,
@@ -279,6 +299,7 @@ export function buildAccrualJournal({
     ActivityDate: new Date().toISOString(),
     CurrencyIsoCode: "USD",
     TransactionAmount: amount,
+    PartnerId: partnerId || PARTNER_IDS["Yahoo Travel"],
     Channel: channel,
     Payment_Type__c: "Cash",
     Cash_Paid__c: String(amount),
@@ -295,7 +316,7 @@ export function buildAccrualJournal({
 
 export function buildRedemptionJournal({
   bookingId, membershipNumber, pointsRedeemed, city, country,
-  hotelName, checkIn, checkOut,
+  hotelName, checkIn, checkOut, partnerId,
 }) {
   return {
     ExternalTransactionNumber: `${bookingId}-REDEEM`,
@@ -306,6 +327,7 @@ export function buildRedemptionJournal({
     ActivityDate: new Date().toISOString(),
     CurrencyIsoCode: "USD",
     TransactionAmount: 0,
+    PartnerId: partnerId || PARTNER_IDS["Yahoo Travel"],
     Points_to_Redeem__c: String(pointsRedeemed),
     Channel: "Web",
     LOB__c: "Hotel",
@@ -315,4 +337,17 @@ export function buildRedemptionJournal({
     EndDate: checkOut ? `${checkOut}T11:00:00.000Z` : new Date().toISOString(),
     Comment: `Redeemed ${pointsRedeemed} pts — ${hotelName}`,
   };
+}
+
+export async function postPartnerActivity(body) {
+  const res = await fetch(`${API_BASE}/api/loyalty/transaction-journal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || err.message || `HTTP ${res.status}`);
+  }
+  return res.json();
 }

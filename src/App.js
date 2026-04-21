@@ -14,6 +14,7 @@ import ConfirmationPage from "./pages/ConfirmationPage";
 import MemberPage from "./pages/MemberPage";
 import PromotionsPage from "./pages/PromotionsPage";
 import PlatformEventsPage from "./pages/PlatformEventsPage";
+import PartnerActivityPage from "./pages/PartnerActivityPage";
 import "./App.css";
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/member" element={<MemberPage />} />
               <Route path="/promotions" element={<PromotionsPage />} />
               <Route path="/events" element={<PlatformEventsPage />} />
+              <Route path="/partner-activity" element={<PartnerActivityPage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </main>
