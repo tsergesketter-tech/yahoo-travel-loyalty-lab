@@ -693,7 +693,7 @@ app.post("/api/loyalty/platform-events", async (req, res) => {
       statusCode: r.httpStatusCode,
       id: r.body?.id || null,
       success: r.httpStatusCode >= 200 && r.httpStatusCode < 300,
-      errors: r.body?.errors || [],
+      errors: Array.isArray(r.body) ? r.body : (r.body?.errors || []),
     }));
 
     const allSuccess = results.every((r) => r.success);
