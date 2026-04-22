@@ -709,6 +709,23 @@ app.post("/api/loyalty/platform-events", async (req, res) => {
   }
 });
 
+// GraphQL proxy — forwards { query, variables } to /services/data/vXX.X/graphql
+app.post("/api/loyalty/graphql", async (req, res) => {
+  try {
+    const { query, variables, operationName } = req.body || {};
+    if (!query) return res.status(400).json({ error: "query is required" });
+    const sf = await sfFetch(`/services/data/${SF_API_VERSION}/graphql`, {
+      method: "POST",
+      body: JSON.stringify({ query, variables: variables || {}, operationName }),
+    });
+    const data = await sf.json();
+    res.status(sf.status).json(data);
+  } catch (e) {
+    console.error("[graphql] Error:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // SOQL query proxy (for exploration)
 app.get("/api/loyalty/query", async (req, res) => {
   try {

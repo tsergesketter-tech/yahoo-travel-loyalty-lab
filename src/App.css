@@ -1725,3 +1725,90 @@ code.pa-partner-info__value { font-family: 'SF Mono', Menlo, monospace; font-siz
 }
 
 @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ==============================================
+   GraphQL Console
+   ============================================== */
+.gql-page { padding: 32px 0 64px; }
+.gql-page__header { margin-bottom: 24px; }
+.gql-page__header h1 { font-size: 28px; font-weight: 700; color: var(--black); margin-bottom: 8px; letter-spacing: -0.02em; }
+.gql-page__header p { font-size: 14px; color: var(--grey-600); max-width: 760px; line-height: 1.5; }
+.gql-page__header code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px; background: var(--purple-ghost); color: var(--purple-dark);
+  padding: 2px 6px; border-radius: 4px;
+}
+
+.gql-controls {
+  display: flex; align-items: flex-end; gap: 16px;
+  background: var(--white); border: 1px solid var(--grey-200); border-radius: var(--radius-lg);
+  padding: 16px 20px; margin-bottom: 20px; box-shadow: var(--shadow-sm);
+}
+.gql-controls__input-group { display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 320px; }
+.gql-controls__input-group label {
+  font-size: 12px; font-weight: 600; color: var(--grey-600);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.gql-controls__input-group input {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px; padding: 9px 12px;
+  border: 1px solid var(--grey-300); border-radius: var(--radius);
+  background: var(--white); color: var(--black);
+  transition: border-color .15s, box-shadow .15s;
+}
+.gql-controls__input-group input:focus {
+  outline: none; border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(125,46,255,.12);
+}
+.gql-controls__run { min-width: 140px; }
+.gql-controls__hint {
+  font-size: 12px; color: var(--grey-500);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.gql-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+
+.gql-pane {
+  background: #0F0F14; border: 1px solid #1F1F28; border-radius: var(--radius-lg);
+  overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: var(--shadow);
+}
+.gql-pane__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; background: #16161D;
+  border-bottom: 1px solid #1F1F28;
+}
+.gql-pane__label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 700; color: #E5E5E5;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.gql-pane__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--grey-500);
+}
+.gql-pane__dot--req { background: var(--purple); box-shadow: 0 0 8px rgba(125,46,255,.6); }
+.gql-pane__dot--ok { background: #22C55E; box-shadow: 0 0 8px rgba(34,197,94,.6); }
+.gql-pane__dot--err { background: #EF4444; box-shadow: 0 0 8px rgba(239,68,68,.6); }
+.gql-pane__dot--idle { background: #3F3F46; }
+.gql-pane__meta {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px; color: #A1A1AA;
+}
+.gql-pane__body {
+  margin: 0; padding: 16px 20px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px; line-height: 1.55;
+  color: #E4E4E7; background: #0F0F14;
+  overflow: auto; max-height: 620px; min-height: 320px;
+  white-space: pre; tab-size: 2;
+}
+.gql-pane__body code { font-family: inherit; color: inherit; background: none; }
+
+@media (max-width: 900px) {
+  .gql-grid { grid-template-columns: 1fr; }
+  .gql-controls { flex-direction: column; align-items: stretch; }
+  .gql-controls__input-group { max-width: none; }
+}

@@ -278,6 +278,16 @@ export async function publishPlatformEvents(events) {
   return res.json();
 }
 
+export async function runGraphQL({ query, variables }) {
+  const res = await fetch(`${API_BASE}/api/loyalty/graphql`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
 export const PARTNER_IDS = {
   "Yahoo Travel": "0ldHn00000114j0IAA",
   "Yahoo News": "0ldHn00000114j4IAA",

@@ -15,6 +15,7 @@ import MemberPage from "./pages/MemberPage";
 import PromotionsPage from "./pages/PromotionsPage";
 import PlatformEventsPage from "./pages/PlatformEventsPage";
 import PartnerActivityPage from "./pages/PartnerActivityPage";
+import GraphQLConsolePage from "./pages/GraphQLConsolePage";
 import "./App.css";
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/promotions" element={<PromotionsPage />} />
               <Route path="/events" element={<PlatformEventsPage />} />
               <Route path="/partner-activity" element={<PartnerActivityPage />} />
+              <Route path="/graphql" element={<GraphQLConsolePage />} />
               <Route path="*" element={<HomePage />} />
             </Routes>
           </main>
