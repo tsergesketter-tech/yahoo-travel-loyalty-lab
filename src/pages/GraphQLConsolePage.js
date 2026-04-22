@@ -1,8 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { runGraphQL } from "../services/sfApi";
 
-const QUERY = `query memberOverview($membership: String) {
+const PRESETS = [
+  {
+    id: "overview",
+    label: "Member Overview",
+    blurb:
+      "Member identity, program, contact, and every point currency in one round trip — two top-level queries, two object types.",
+    query: `query memberOverview($membership: String) {
   uiapi {
     query {
       LoyaltyProgramMember(
@@ -39,20 +45,139 @@ const QUERY = `query memberOverview($membership: String) {
       }
     }
   }
-}`;
+}`,
+  },
+  {
+    id: "promotions",
+    label: "Active Promotions",
+    blurb:
+      "Promotions the member is enrolled in, with progress toward each cumulative-usage target and the underlying promotion definition.",
+    query: `query memberPromotions($membership: String) {
+  uiapi {
+    query {
+      LoyaltyProgramMbrPromotion(
+        where: {
+          LoyaltyProgramMember: { MembershipNumber: { eq: $membership } }
+          IsEnrollmentActive: { eq: true }
+        }
+        first: 25
+      ) {
+        edges {
+          node {
+            Id
+            IsEnrollmentActive { value }
+            CumulativeUsageCompleted { value }
+            CumulativeUsageTarget { value }
+            CumulativeUsageCompletePercent { value }
+            Promotion {
+              Name { value }
+              Description { value }
+            }
+          }
+        }
+      }
+    }
+  }
+}`,
+  },
+  {
+    id: "vouchers",
+    label: "Vouchers",
+    blurb:
+      "Every voucher attached to the member with face value, expiration, and the voucher definition that issued it.",
+    query: `query memberVouchers($membership: String) {
+  uiapi {
+    query {
+      Voucher(
+        where: { LoyaltyProgramMember: { MembershipNumber: { eq: $membership } } }
+        orderBy: { ExpirationDate: { order: ASC } }
+        first: 25
+      ) {
+        edges {
+          node {
+            Id
+            VoucherCode { value }
+            Status { value }
+            FaceValue { displayValue }
+            EffectiveDate { value }
+            ExpirationDate { value }
+            VoucherDefinition { Name { value } }
+          }
+        }
+      }
+    }
+  }
+}`,
+  },
+  {
+    id: "tier",
+    label: "Tier History",
+    blurb:
+      "Tier assignments for the member with effective and expiration dates, plus a join to the underlying tier definition.",
+    query: `query memberTiers($membership: String) {
+  uiapi {
+    query {
+      LoyaltyMemberTier(
+        where: { LoyaltyMember: { MembershipNumber: { eq: $membership } } }
+        orderBy: { EffectiveDate: { order: DESC } }
+        first: 25
+      ) {
+        edges {
+          node {
+            Id
+            Status { value }
+            EnrollmentType { value }
+            EffectiveDate { value }
+            TierExpirationDate { value }
+            ReasonForChange { value }
+            LoyaltyTier { Name { value } }
+          }
+        }
+      }
+    }
+  }
+}`,
+  },
+];
+
+function buildRequestDisplay(query, variables) {
+  const indented = query
+    .split("\n")
+    .map((l) => "    " + l)
+    .join("\n");
+  const vars = JSON.stringify(variables, null, 2)
+    .split("\n")
+    .map((l, i) => (i === 0 ? l : "  " + l))
+    .join("\n");
+  return `{\n  "query": \`\n${indented}\n  \`,\n  "variables": ${vars}\n}`;
+}
 
 export default function GraphQLConsolePage() {
   const { member } = useApp();
   const [membership, setMembership] = useState(member?.membershipNumber || "YAH0000001");
+  const [presetId, setPresetId] = useState(PRESETS[0].id);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null);
   const [elapsed, setElapsed] = useState(null);
   const [error, setError] = useState(null);
 
+  const preset = PRESETS.find((p) => p.id === presetId) || PRESETS[0];
+  const variables = useMemo(() => ({ membership }), [membership]);
   const requestPayload = useMemo(
-    () => ({ query: QUERY, variables: { membership } }),
-    [membership]
+    () => ({ query: preset.query, variables }),
+    [preset.query, variables]
   );
+  const requestDisplay = useMemo(
+    () => buildRequestDisplay(preset.query, variables),
+    [preset.query, variables]
+  );
+
+  // Reset response when switching presets so panes don't disagree.
+  useEffect(() => {
+    setResult(null);
+    setElapsed(null);
+    setError(null);
+  }, [presetId]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -83,12 +208,26 @@ export default function GraphQLConsolePage() {
         <div>
           <h1>GraphQL Console</h1>
           <p>
-            Send a single query through the Salesforce GraphQL API
-            (<code>/services/data/v66.0/graphql</code>) to fetch a member, their program,
-            contact, and point balances in one round trip.
+            Send queries through the Salesforce GraphQL API
+            (<code>/services/data/v66.0/graphql</code>) to read across multiple
+            Loyalty objects in a single request.
           </p>
         </div>
       </div>
+
+      <div className="gql-tabs">
+        {PRESETS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className={`gql-tab ${p.id === presetId ? "gql-tab--active" : ""}`}
+            onClick={() => setPresetId(p.id)}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <p className="gql-tabs__blurb">{preset.blurb}</p>
 
       <div className="gql-controls">
         <div className="gql-controls__input-group">
@@ -123,7 +262,7 @@ export default function GraphQLConsolePage() {
             <span className="gql-pane__meta">POST /api/loyalty/graphql</span>
           </header>
           <pre className="gql-pane__body">
-            <code>{JSON.stringify(requestPayload, null, 2)}</code>
+            <code>{requestDisplay}</code>
           </pre>
         </section>
 

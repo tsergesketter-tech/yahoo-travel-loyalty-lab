@@ -1739,6 +1739,28 @@ code.pa-partner-info__value { font-family: 'SF Mono', Menlo, monospace; font-siz
   padding: 2px 6px; border-radius: 4px;
 }
 
+.gql-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  background: var(--white); border: 1px solid var(--grey-200);
+  border-radius: var(--radius-lg); padding: 6px;
+  margin-bottom: 12px; box-shadow: var(--shadow-sm);
+}
+.gql-tab {
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  color: var(--grey-600); background: transparent; border: none;
+  padding: 8px 14px; border-radius: var(--radius); cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.gql-tab:hover { background: var(--purple-ghost); color: var(--purple); }
+.gql-tab--active,
+.gql-tab--active:hover {
+  background: var(--purple); color: var(--white);
+}
+.gql-tabs__blurb {
+  font-size: 13px; color: var(--grey-600); line-height: 1.5;
+  margin: 0 4px 16px; max-width: 760px;
+}
+
 .gql-controls {
   display: flex; align-items: flex-end; gap: 16px;
   background: var(--white); border: 1px solid var(--grey-200); border-radius: var(--radius-lg);
