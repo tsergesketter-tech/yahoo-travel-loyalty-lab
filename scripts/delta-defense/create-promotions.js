@@ -276,21 +276,23 @@ async function main() {
       continue;
     }
 
-    // Combine objective + description into the Description field
-    const fullDescription = `[Objective] ${promo.objective}\n\n${promo.description}`;
-
     const record = {
       Name: promo.name,
       LoyaltyProgramId: programId,
-      Description: fullDescription,
-      PromotionImageUrl: promo.imageUrl,
+      Objective: promo.objective,
+      Description: promo.description,
+      ImageUrl: promo.imageUrl,
       StartDate: promo.startDate,
       EndDate: promo.endDate,
-      Status: "Active",
-      LoyaltyPromotionType: promo.loyaltyPromotionType,
-      IsActive: true,
+      CurrencyIsoCode: "USD",
+      LoyaltyPromotionType: promo.loyaltyPromotionType || null,
       IsEnrollmentRequired: promo.isEnrollmentRequired,
-      FulfillmentAction: promo.fulfillmentAction,
+      ...(promo.isEnrollmentRequired
+        ? { EnrollmentStartDate: promo.startDate, EnrollmentEndDate: promo.endDate }
+        : {}),
+      ...(promo.loyaltyPromotionType === "Cumulative"
+        ? { CumulativeUsageTarget: promo.cumulativeUsageTarget || 3 }
+        : {}),
       ...(promo.maximumRewardValue != null
         ? { MaximumRewardValue: promo.maximumRewardValue }
         : {}),
